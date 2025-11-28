@@ -11,14 +11,13 @@ def extract_nodes() -> None:
     # determine relative paths for source and output files
     BASE_DIR = Path(__file__).resolve().parent
     SOURCE_PATH = BASE_DIR / "databases" / "gplus_combined.txt.gz"
-    OUTPUT_PATH = BASE_DIR / "databases" / "gplus_nodes.txt"
 
     # ensure the source dataset exists
     if not SOURCE_PATH.exists():
         raise FileNotFoundError(f"Missing dataset: {SOURCE_PATH}")
 
 
-    # TODO: When we create a graph structure with the adjancency list, we can load it here instead of re-parsing the edge list.
+    # TODO: When we create a graph structure/adjancency list, we can load it here instead of re-parsing the edge list.
     nodes: set[str] = set()
 
     # Stream the edge list and persist all unique node ids.
@@ -38,8 +37,6 @@ def extract_nodes() -> None:
                     end="\r",
                 )
 
-    sorted_nodes = sorted(nodes, key=int)
-    OUTPUT_PATH.write_text("\n".join(sorted_nodes), encoding="utf-8")
 
     print(
         f"\nNodes processed: {len(nodes):,} \n"
