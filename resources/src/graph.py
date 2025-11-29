@@ -3,6 +3,7 @@ import glob
 import heapq
 from collections import defaultdict
 import time
+from math import floor
 
 class Graph:
     def __init__(self):
@@ -30,6 +31,16 @@ class Graph:
                         if edge not in unique_edges_tracker:
                             self.add_edge(u, v) 
                             unique_edges_tracker.add(edge)
+
+                            # if len( unique_edges_tracker) % 1_000_000 == 0:
+                            if floor((len(unique_edges_tracker)/13673453) *100) % 1 == 0:
+                                print(
+                                    f"Processed {len(unique_edges_tracker):,} edges ({((len(unique_edges_tracker)/13673453) *100):,.1f}%); found {len(self.adjacency_list):,} unique nodes ({((len(self.adjacency_list)/107614)*100):,.1f}%)",
+                                    end="\r",
+                                    )
+
+
+
                             
         except Exception as e:
             print(f"Error reading file {file_path}: {e}")
@@ -137,3 +148,104 @@ class Graph:
         
         return distances[target_node], path, duration
     
+
+    def _bfs_distances(self, source):
+        """Unweighted BFS distances from source to all reachable nodes."""
+        dist = {source: 0}
+        q = [source]
+        for node in q:
+            for nbr in self.adjacency_list[node]:
+                if nbr not in dist:
+                    dist[nbr] = dist[node] + 1
+                    q.append(nbr)
+        return dist
+
+    def astar_with_landmarks(self, start, goal):
+        """
+        A* search using a landmark heuristic (ALT).
+        landmark_distances: {landmark: {node: distance}} precomputed via _bfs_distances.
+        Returns (distance or None, path or message, duration_sec).
+        """
+
+        landmarks = [111091089527727420853,
+    105237212888595777019,
+    106189723444098348646,
+    104987932455782713675,
+    109813896768294978296,
+    107117483540235115863,
+    112063946124358686266,
+    101261243957067319422,
+    101849747879612982297,
+    118418436905562612953,
+    102476152658204495450,
+    113116318008017777871,
+    113686253941057080055,
+    109412257237874861202,
+    109895887909967698705,
+    113455290791279442483,
+    110286587261352351537,
+    100535338638690515335,
+    118207880179234484610,
+    108176814619778619437,
+    109330684746468207713,
+    110318982509514011806,
+    113612142759476883204,
+    102518365620075109973,
+    107362628080904735459,
+    112374836634096795698,
+    100962871525684315897,
+    101035196437264488455,
+    105076678694475690385,
+    105390077271236874234,
+    107234826207633309420,
+    114536133164105123829,
+    113040469867257447555,
+    113622835120994907038
+    ]
+
+        # Landmarks picked with an algorithm to grab the farthest corners/end points of the graph.
+        landmark_distances = {lm: _bfs_distances(lm) for lm in landmarks}
+
+
+
+
+        if start not in self.adjacency_list or goal not in self.adjacency_list:
+            return None, "Start or goal not in graph.", 0.0
+
+        def heuristic(node):
+            # Triangle inequality: h(n) = max |d(L, goal) - d(L, n)|
+            vals = []
+            for _, dist_map in landmark_distances.items():
+                if goal in dist_map and node in dist_map:
+                    vals.append(abs(dist_map[goal] - dist_map[node]))
+            return max(vals) if vals else 0
+
+        t0 = time.time()
+        open_set = [(heuristic(start), 0, start)]  # (f, g, node)
+        g_score = {start: 0}
+        came_from = {}
+
+        while open_set:
+            f, g, current = heapq.heappop(open_set)
+            if current == goal:
+                path = [current]
+                while current in came_from:
+                    current = came_from[current]
+                    path.append(current)
+                path.reverse()
+                return g, path, time.time() - t0
+
+            # Skip stale queue entries
+            if g > g_score.get(current, inf):
+                continue
+
+            for nbr in self.adjacency_list[current]:
+                tentative = g + 1
+                if tentative < g_score.get(nbr, inf):
+                    came_from[nbr] = current
+                    g_score[nbr] = tentative
+                    heapq.heappush(open_set, (tentative + heuristic(nbr), tentative, nbr))
+
+        return None, "Path not found.", time.time() - t0
+
+
