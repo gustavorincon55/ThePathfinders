@@ -2,6 +2,7 @@ import os
 import glob
 import heapq
 from collections import defaultdict
+import time
 
 class Graph:
     def __init__(self):
@@ -53,6 +54,9 @@ class Graph:
         Dijkstra's Algorithm. Since the graph is unweighted, all edges 
         are treated as weight 1.
         """
+
+        start_time = time.time()
+
         if start_node not in self.adj_list or target_node not in self.adj_list:
             return None, "Start or target node not in graph."
 
@@ -99,6 +103,10 @@ class Graph:
                 break
             
         path.reverse()
+
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f"⏱️ Dijkstra's Algorithm completed in {end_time - start_time:.2f} seconds.")
         
-        return distances[target_node], path
+        return distances[target_node], path, duration
     
