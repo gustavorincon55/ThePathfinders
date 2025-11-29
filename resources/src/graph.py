@@ -14,6 +14,33 @@ class Graph:
         self.adjacency_list[u].add(v)
         self.adjacency_list[v].add(u)
 
+    def load_from_file(self, file_path):
+        print(f"⌛ Starting graph data consolidation from {file_path}...")
+        unique_edges_tracker = set() 
+        
+        try:
+            with open(file_path, 'r') as f:
+                for line in f:
+                    parts = line.strip().split()
+                    
+                    if len(parts) == 2:
+                        u, v = parts[0], parts[1]
+                        edge = tuple(sorted((u, v)))
+                        
+                        if edge not in unique_edges_tracker:
+                            self.add_edge(u, v) 
+                            unique_edges_tracker.add(edge)
+                            
+        except Exception as e:
+            print(f"Error reading file {file_path}: {e}")
+            return
+        
+        self.num_edges = len(unique_edges_tracker)
+        self.num_nodes = len(self.adjacency_list)
+        print(f"Total Nodes: **{self.num_nodes:,}**")
+        print(f"Total Edges (Undirected): **{self.num_edges:,}**")
+
+
     def load_from_directory(self, directory_path):
         print(f"⌛ Starting graph data consolidation from {directory_path}...")
         edge_files = glob.glob(os.path.join(directory_path, '**', '*.edges'), recursive=True)
