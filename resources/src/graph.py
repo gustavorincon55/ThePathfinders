@@ -96,7 +96,7 @@ class Graph:
         start_time = time.time()
 
         if start_node not in self.adj_list or target_node not in self.adj_list:
-            return None, "Start or target node not in graph."
+            return None, "Start or target node not in graph.", 0.0
 
         # Min-Priority Queue: stores tuples of (distance, node)
         pq = [(0, start_node)]
@@ -127,9 +127,11 @@ class Graph:
                     predecessors[neighbor] = current_node
                     heapq.heappush(pq, (new_distance, neighbor))
 
+        end_time = time.time()
+        duration = end_time - start_time
 
         if target_node not in predecessors and start_node != target_node:
-            return None, "Path not found."
+            return None, "Path not found.", duration
 
         path = []
         node = target_node
@@ -142,8 +144,6 @@ class Graph:
             
         path.reverse()
 
-        end_time = time.time()
-        duration = end_time - start_time
         print(f"⏱️ Dijkstra's Algorithm completed in {end_time - start_time:.2f} seconds.")
         
         return distances[target_node], path, duration
@@ -204,13 +204,13 @@ class Graph:
         ]
 
         # Landmarks picked with an algorithm to grab the farthest corners/end points of the graph.
-        landmark_distances = {lm: _bfs_distances(lm) for lm in landmarks}
+        landmark_distances = {lm: self._bfs_distances(lm) for lm in landmarks}
 
 
 
 
         if start not in self.adjacency_list or goal not in self.adjacency_list:
-            return None, "Start or goal not in graph.", 0.0
+            return None, "Start or target node not in graph.", 0.0
 
         def heuristic(node):
             # Triangle inequality: h(n) = max |d(L, goal) - d(L, n)|
