@@ -3,7 +3,7 @@ import glob
 import heapq
 from collections import defaultdict
 import time
-from math import floor
+from math import floor, inf
 
 class Graph:
     def __init__(self):
