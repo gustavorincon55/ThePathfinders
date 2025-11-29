@@ -7,49 +7,31 @@ import sys
 
 from src.graph import Graph
 
-def extract_nodes() -> None:
-
-    # the database can be found here: https://snap.stanford.edu/data/ego-Gplus.html
-    # only download the "gplus_combined.txt.gz" file into the "data" folder.
-
-    # determine relative paths for source and output files
-    BASE_DIR = Path(__file__).resolve().parent
-    SOURCE_PATH = BASE_DIR / "data" / "gplus_combined.txt"
-
-    # ensure the source dataset exists
-    if not SOURCE_PATH.exists():
-        raise FileNotFoundError(f"Missing dataset: {SOURCE_PATH}")
-
-
-    # TODO: When we create a graph structure/adjancency list, we can load it here instead of re-parsing the edge list.
-    g = Graph()
-    g.load_from_file(SOURCE_PATH)
-
+def simple_CLI() -> None:
     
-    # nodes: set[str] = set()
+    while True:
+        print("\nOptions: [1] Dijkstra  [2] A*  [q] quit")
+        choice = input("Select: ").strip().lower()
+        if choice == "q":
+            break
 
-    # # Stream the edge list and persist all unique node ids.
-    # with gzip.open(SOURCE_PATH, "rt") as fh:
-    #     for index, line in enumerate(fh, start=1):
-    #         parts = line.strip().split()
-    #         if len(parts) != 2:
-    #             continue  # Skip malformed lines.
+        start = input("Start node: ").strip()
+        goal = input("Goal node: ").strip()
 
-    #         # TODO: Once we have the adjacency list/graph structure we can do the updates here 
-    #         nodes.update(parts)
+        try:
 
-    #         # Print a progress update every million edges processed.
-    #         if index % 1_000_000 == 0:
-    #             print(
-    #                 f"Processed {index:,} edges; found {len(nodes):,} unique nodes",
-    #                 end="\r",
-    #             )
+            if choice == "1":
+                dist, path, dur = g.dijkstra_shortest_path(start, goal)
+                print(f"Dijkstra dist={dist}, time={dur:.3f}s, path_len={len(path) if isinstance(path, list) else 'N/A'}")
+            elif choice == "2":
+                dist, path, dur = g.astar_with_landmarks(start, goal)
+                print(f"A* dist={dist}, time={dur:.3f}s, path_len={len(path) if isinstance(path, list) else 'N/A'}")
+            else:
+                print("Invalid choice")
 
-
-    # print(
-    #     f"\nNodes processed: {len(nodes):,} \n"
-    #     f"(source: {SOURCE_PATH})."
-    # )
+        except Exception as exc:
+            print(f"Error: {exc}")
+            continue  # skips to next iteration
 
 
 
@@ -73,4 +55,7 @@ if __name__ == "__main__":
 
 
     g = Graph()
+
     g.load_from_file(SOURCE_PATH)
+
+    simple_CLI()
