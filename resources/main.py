@@ -56,8 +56,21 @@ def extract_nodes() -> None:
 
 
 if __name__ == "__main__":
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    print(current_dir)
-    src_path = os.path.join(current_dir, 'src')
-    print(src_path)
-    extract_nodes()
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+    # print(current_dir)
+    # src_path = os.path.join(current_dir, 'src')
+    # print(src_path)
+    # # extract_nodes()
+
+
+    # determine relative paths for source and output files
+    BASE_DIR = Path(__file__).resolve().parent
+    SOURCE_PATH = BASE_DIR / "data" / "gplus_combined.txt"
+
+    # ensure the source dataset exists
+    if not SOURCE_PATH.exists():
+        raise FileNotFoundError(f"Missing dataset: {SOURCE_PATH}")
+
+
+    g = Graph()
+    g.load_from_file(SOURCE_PATH)
