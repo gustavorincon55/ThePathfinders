@@ -23,7 +23,6 @@ def home():
 @app.route('/api/search', methods=['POST'])
 def search_helper():
 
-    print(request.json)
 
     data = request.json
     start_node = data.get('start')
@@ -36,7 +35,7 @@ def search_helper():
 
     if mode == 'farthest':
         result = g.find_eccentricity(start_node)
-        print(result)
+
         return jsonify(result)
     
     elif mode == 'shortest':
@@ -47,10 +46,7 @@ def search_helper():
             result = g.astar_with_landmarks(start_node, end_node)
         elif algorithm == 'dijkstra':
             result = g.dijkstra_shortest_path(start_node, end_node)
-        
-        print("Result:")
-        print(result)
-        print(jsonify(result))
+
 
         return jsonify(result)
     

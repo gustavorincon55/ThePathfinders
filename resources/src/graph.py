@@ -17,7 +17,6 @@ class Graph:
 
 
     def load_from_file(self, file_path):
-        print(f"⌛ Starting graph data consolidation from {file_path}...")
         unique_edges_tracker = set() 
         
         try:
@@ -54,7 +53,6 @@ class Graph:
 
 
     def load_from_directory(self, directory_path):
-        print(f"⌛ Starting graph data consolidation from {directory_path}...")
         edge_files = glob.glob(os.path.join(directory_path, '**', '*.edges'), recursive=True)
         unique_edges_tracker = set() 
         
