@@ -3,7 +3,7 @@ import glob
 import heapq
 from collections import defaultdict
 import time
-from math import floor, inf
+from math import inf, floor
 
 class Graph:
     def __init__(self):
@@ -14,6 +14,7 @@ class Graph:
     def add_edge(self, u, v):
         self.adjacency_list[u].add(v)
         self.adjacency_list[v].add(u)
+
 
     def load_from_file(self, file_path):
         print(f"⌛ Starting graph data consolidation from {file_path}...")
@@ -95,6 +96,7 @@ class Graph:
 
         start_time = time.time()
 
+
         if start_node not in self.adjacency_list or target_node not in self.adjacency_list:
             return {'success': True, 'algorithm': 'dijkstra', 'visited': 0, 'distance': None, 'path': 'Start or target node not in graph.', 'runtime': 0.0}
 
@@ -113,7 +115,9 @@ class Graph:
         while pq:
             # Extract the node with the smallest distance (O(log V))
             current_distance, current_node = heapq.heappop(pq)
+
             visited_count += 1
+
 
             if current_distance > distances[current_node]:
                 continue
@@ -147,7 +151,6 @@ class Graph:
         path.reverse()
 
         print(f"Dijkstra's Algorithm completed in {end_time - start_time:.2f} seconds.")
-        
         return {'success': True, 'algorithm': 'dijkstra', 'visited': visited_count, 'distance': distances[target_node], 'path': path, 'runtime': duration}
     
 
@@ -276,3 +279,4 @@ class Graph:
         msg = f"Found farthest node(s) with a shortest path of {max_distance} hops."
 
         return {"success": True, "message": msg, "runtime": durantion, "visited": visited_count, "max_distance": max_distance, "farthest_nodes": farthest_nodes}
+    
