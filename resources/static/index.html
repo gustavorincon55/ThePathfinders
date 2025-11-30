@@ -1,0 +1,374 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Search & Analysis</title>
+<!-- Load Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Use Inter font -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+body {
+font-family: 'Inter', sans-serif;
+background-color: #f7f9fc;
+}
+.sidebar {
+box-shadow: 4px 0 8px rgba(0, 0, 0, 0.05);
+}
+</style>
+</head>
+<body class="min-h-screen flex">
+
+<!-- Sidebar: Input and Stats Area (Wireframe Left) -->
+<div class="sidebar w-full md:w-80 p-6 bg-white flex flex-col space-y-6">
+<h1 class="text-2xl font-bold text-gray-800 border-b pb-3">Graph Search Tool</h1>
+
+<!-- Mode Selector -->
+<div class="space-y-2">
+<label for="mode-selector" class="text-sm font-medium text-gray-700">Operation Mode</label>
+<select id="mode-selector" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+<option value="shortest">Shortest Path (A*/Dijkstra)</option>
+<option value="farthest">Farthest Node (Eccentricity)</option>
+</select>
+</div>
+
+<!-- Source ID Input -->
+<div class="space-y-2">
+<label for="source-id" class="text-sm font-medium text-gray-700">Source ID</label>
+<input type="text" id="source-id" value="A" placeholder="Enter Source Node ID" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+</div>
+
+<!-- Destination ID Input -->
+<div class="space-y-2" id="destination-input-group">
+<label for="destination-id" class="text-sm font-medium text-gray-700">Destination ID</label>
+<input type="text" id="destination-id" value="H" placeholder="Enter Destination Node ID" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+</div>
+
+<!-- Algorithm Selector -->
+<div class="space-y-2" id="algorithm-selector-group">
+<label for="algorithm-selector" class="text-sm font-medium text-gray-700">Algorithm</label>
+<select id="algorithm-selector" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+<option value="astar">A* Search (with Heuristic)</option>
+<option value="dijkstra">Dijkstra's (No Heuristic)</option>
+</select>
+</div>
+
+<!-- Run Button -->
+<button id="run-button" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 shadow-md">
+Run Search
+</button>
+
+<!-- Stats Display -->
+<div class="border-t pt-4 space-y-3">
+<h2 class="text-lg font-semibold text-gray-800">Small Stats</h2>
+<div id="stats-display" class="space-y-2">
+<p class="text-sm text-gray-600"><span class="font-medium text-gray-800">Path/Max Length:</span> <span id="stat-length" class="font-mono text-blue-600">--</span></p>
+<p class="text-sm text-gray-600"><span class="font-medium text-gray-800">Runtime:</span> <span id="stat-runtime" class="font-mono text-blue-600">--</span></p>
+<p class="text-sm text-gray-600"><span class="font-medium text-gray-800">Nodes Visited:</span> <span id="stat-visited" class="font-mono text-blue-600">--</span></p>
+</div>
+</div>
+
+<!-- Message/Error Display -->
+<div id="message-box" class="p-3 text-sm bg-yellow-100 text-yellow-700 rounded-lg hidden"></div>
+</div>
+
+<!-- Main Content: Results Area (Wireframe Right) -->
+<div class="flex-1 p-6 flex flex-col space-y-8">
+<h1 class="text-3xl font-extrabold text-gray-700">Analysis Results</h1>
+
+<!-- Path/Farthest Node List -->
+<div class="bg-white p-4 rounded-xl shadow-lg border">
+<h2 class="text-xl font-semibold mb-3 text-gray-800" id="path-list-title">Ordered Shortest Path</h2>
+<div id="path-list" class="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-lg bg-gray-50 min-h-[40px]">
+<span class="text-gray-400">Run a search to see the path or farthest node here.</span>
+</div>
+</div>
+
+<!-- Comparison Table (Simplified) -->
+<div class="bg-white p-4 rounded-xl shadow-lg border">
+<h2 class="text-xl font-semibold mb-3 text-gray-800">Search Metrics</h2>
+<div class="overflow-x-auto">
+<table class="min-w-full divide-y divide-gray-200">
+<thead class="bg-gray-50">
+<tr>
+<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">A* Search</th>
+<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dijkstra</th>
+</tr>
+</thead>
+<tbody class="bg-white divide-y divide-gray-200" id="metrics-body">
+<!-- Metrics will be inserted here -->
+<tr>
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Last Runtime</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-mono" id="metric-astar-runtime">--</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-mono" id="metric-dijkstra-runtime">--</td>
+</tr>
+<tr>
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Nodes Explored</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-mono" id="metric-astar-visited">--</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-mono" id="metric-dijkstra-visited">--</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<!-- JavaScript Logic -->
+<script>
+// Configuration: API endpoint for the Python backend (main.py)
+// This assumes the Python server is accessible at the same root path.
+const API_URL = '/api/search';
+
+// Stores the last run metrics for the comparison table
+const metrics = {
+'astar': { runtime: '--', visited: '--' },
+'dijkstra': { runtime: '--', visited: '--' }
+};
+
+// --- DOM ELEMENTS ---
+const modeSelector = document.getElementById('mode-selector');
+const sourceInput = document.getElementById('source-id');
+const destinationInputGroup = document.getElementById('destination-input-group');
+const destinationInput = document.getElementById('destination-id');
+const algorithmSelectorGroup = document.getElementById('algorithm-selector-group');
+const runButton = document.getElementById('run-button');
+const messageBox = document.getElementById('message-box');
+const pathListTitle = document.getElementById('path-list-title');
+
+// --- CORE BACKEND INTERACTION ---
+
+/**
+* Sends search parameters to the Python backend API and processes the result.
+*/
+async function searchBackend(mode, start, goal, algorithm) {
+runButton.disabled = true;
+runButton.textContent = "Processing Request...";
+
+// Set loading message
+const loadingText = mode === 'shortest' ? `Running ${algorithm.toUpperCase()} for path...` : "Running Eccentricity Search...";
+showMessage(loadingText, 'info');
+
+const payload = {
+mode: mode,
+start: start,
+// Only include goal if the mode is 'shortest'
+goal: mode === 'shortest' ? goal : undefined,
+algorithm: algorithm
+};
+
+try {
+const response = await fetch(API_URL, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(payload)
+});
+
+const result = await response.json();
+
+if (response.status !== 200) {
+// Handle server-side validation or internal errors (like 400 or 500)
+showMessage(result.message || `Backend Error (${response.status})`, 'error');
+clearStatsDisplay();
+renderPathList([]);
+return;
+}
+
+if (mode === 'farthest') {
+updateEccentricityResults(result, start);
+} else {
+updateShortestPathResults(result, algorithm);
+}
+
+} catch (error) {
+console.error("Backend request failed:", error);
+showMessage("Error: Could not connect to the backend server. Is main.py running?", 'error');
+clearResults();
+} finally {
+runButton.disabled = false;
+runButton.textContent = mode === 'farthest' ? "Find Farthest Node" : "Run Search";
+}
+}
+
+// --- EVENT HANDLERS ---
+
+modeSelector.addEventListener('change', (e) => {
+const mode = e.target.value;
+if (mode === 'farthest') {
+destinationInputGroup.classList.add('hidden');
+algorithmSelectorGroup.classList.add('hidden');
+pathListTitle.textContent = "Farthest Node(s) Reached";
+runButton.textContent = "Find Farthest Node";
+} else {
+destinationInputGroup.classList.remove('hidden');
+algorithmSelectorGroup.classList.remove('hidden');
+pathListTitle.textContent = "Ordered Shortest Path";
+runButton.textContent = "Run Search";
+}
+clearResults();
+});
+
+runButton.addEventListener('click', () => {
+clearMessages();
+const start = sourceInput.value.trim().toUpperCase();
+const goal = destinationInput.value.trim().toUpperCase();
+const mode = modeSelector.value;
+const algorithm = document.getElementById('algorithm-selector').value;
+
+// Simple input validation
+if (!start) {
+showMessage("Please enter a Source ID.", 'error');
+return;
+}
+if (mode === 'shortest' && !goal) {
+showMessage("Please enter a Destination ID.", 'error');
+return;
+}
+
+// Trigger backend call
+searchBackend(mode, start, goal, algorithm);
+});
+
+// --- UI UTILITY FUNCTIONS (RETAINED) ---
+
+function clearMessages() {
+messageBox.classList.add('hidden');
+messageBox.textContent = '';
+}
+
+function showMessage(text, type) {
+messageBox.classList.remove('hidden');
+messageBox.textContent = text;
+if (type === 'error') {
+messageBox.className = 'p-3 text-sm bg-red-100 text-red-700 rounded-lg';
+} else if (type === 'success') {
+messageBox.className = 'p-3 text-sm bg-green-100 text-green-700 rounded-lg';
+} else if (type === 'info') {
+// Use for loading/pending states
+messageBox.className = 'p-3 text-sm bg-blue-100 text-blue-700 rounded-lg';
+}
+}
+
+function updateShortestPathResults(result, algorithm) {
+document.getElementById('stat-runtime').textContent = result.runtime > 0 ? `${result.runtime.toFixed(4)}s` : '--';
+document.getElementById('stat-visited').textContent = result.visited > 0 ? result.visited.toLocaleString() : '--';
+
+if (result.success) {
+document.getElementById('stat-length').textContent = result.distance.toLocaleString();
+renderPathList(result.path);
+showMessage(`Successfully found shortest path via ${algorithm.toUpperCase()}.`, 'success');
+
+// Update metrics table
+metrics[algorithm].runtime = result.runtime.toFixed(4) + 's';
+metrics[algorithm].visited = result.visited.toLocaleString();
+updateMetricsTable();
+} else {
+document.getElementById('stat-length').textContent = '--';
+renderPathList([]);
+showMessage(result.message || `Search failed for ${algorithm.toUpperCase()}.`, 'error');
+}
+}
+
+function updateEccentricityResults(result, start) {
+document.getElementById('stat-runtime').textContent = result.runtime > 0 ? `${result.runtime.toFixed(4)}s` : '--';
+document.getElementById('stat-visited').textContent = result.visited > 0 ? result.visited.toLocaleString() : '--';
+
+// Clear algorithm metrics as they are irrelevant for eccentricity
+metrics.astar = { runtime: '--', visited: '--' };
+metrics.dijkstra = { runtime: '--', visited: '--' };
+updateMetricsTable();
+
+if (result.success) {
+document.getElementById('stat-length').textContent = result.max_distance.toLocaleString();
+renderFarthestNodes(start, result.farthest_nodes);
+showMessage(result.message, 'success');
+} else {
+document.getElementById('stat-length').textContent = '--';
+renderPathList([]);
+showMessage(result.message || 'Farthest node search failed.', 'error');
+}
+}
+
+function clearStatsDisplay() {
+document.getElementById('stat-length').textContent = '--';
+document.getElementById('stat-runtime').textContent = '--';
+document.getElementById('stat-visited').textContent = '--';
+}
+
+function renderPathList(path) {
+const pathList = document.getElementById('path-list');
+pathList.innerHTML = '';
+
+if (!path || path.length === 0) {
+pathList.innerHTML = '<span class="text-gray-400">Path not found or results cleared.</span>';
+return;
+}
+
+path.forEach((node, index) => {
+const nodeElement = document.createElement('span');
+nodeElement.className = 'px-3 py-1 rounded-full text-sm font-semibold';
+
+if (index === 0) {
+nodeElement.className += ' bg-green-100 text-green-800 border border-green-300'; // Start node
+} else if (index === path.length - 1) {
+nodeElement.className += ' bg-red-100 text-red-800 border border-red-300'; // End node
+} else {
+nodeElement.className += ' bg-blue-100 text-blue-800 border border-blue-300';
+}
+
+nodeElement.textContent = node;
+pathList.appendChild(nodeElement);
+});
+}
+
+function renderFarthestNodes(start, nodes) {
+const pathList = document.getElementById('path-list');
+pathList.innerHTML = '';
+
+if (nodes.length === 0) {
+pathList.innerHTML = '<span class="text-gray-400">No reachable nodes found.</span>';
+return;
+}
+
+// Render start node
+let nodeElement = document.createElement('span');
+nodeElement.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 border border-green-300';
+nodeElement.textContent = `START: ${start}`;
+pathList.appendChild(nodeElement);
+
+// Render separator
+let separator = document.createElement('span');
+separator.className = 'text-gray-500 font-bold mx-2';
+separator.textContent = '→ FARTHEST NODES:';
+pathList.appendChild(separator);
+
+// Render farthest nodes
+nodes.forEach((node) => {
+nodeElement = document.createElement('span');
+nodeElement.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800 border border-purple-300';
+nodeElement.textContent = node;
+pathList.appendChild(nodeElement);
+});
+}
+
+function updateMetricsTable() {
+document.getElementById('metric-astar-runtime').textContent = metrics.astar.runtime;
+document.getElementById('metric-astar-visited').textContent = metrics.astar.visited;
+document.getElementById('metric-dijkstra-runtime').textContent = metrics.dijkstra.runtime;
+document.getElementById('metric-dijkstra-visited').textContent = metrics.dijkstra.visited;
+}
+
+function clearResults() {
+clearStatsDisplay();
+renderPathList([]);
+clearMessages();
+}
+
+// Initialize UI State
+document.addEventListener('DOMContentLoaded', () => {
+modeSelector.dispatchEvent(new Event('change'));
+updateMetricsTable();
+});
+</script>
+</body>
+</html>
