@@ -1,76 +1,65 @@
 from __future__ import annotations
-
-import gzip
-from pathlib import Path
 import os
-import sys
+from pathlib import Path
+from flask import Flask, request, jsonify, send_file
 
 from src.graph import Graph
 
-def extract_nodes() -> None:
+app = Flask(__name__)
 
-    # the database can be found here: https://snap.stanford.edu/data/ego-Gplus.html
-    # only download the "gplus_combined.txt.gz" file into the "data" folder.
+BASE_DIR = Path(__file__).resolve().parent
+SOURCE_PATH = BASE_DIR / "data" / "gplus_combined.txt"
 
-    # determine relative paths for source and output files
-    BASE_DIR = Path(__file__).resolve().parent
-    SOURCE_PATH = BASE_DIR / "data" / "gplus_combined.txt"
+if not SOURCE_PATH.exists():
+    raise FileNotFoundError(f"Missing dataset: {SOURCE_PATH}")
 
-    # ensure the source dataset exists
-    if not SOURCE_PATH.exists():
-        raise FileNotFoundError(f"Missing dataset: {SOURCE_PATH}")
+g = Graph()
+g.load_from_file(SOURCE_PATH)
 
+@app.route('/', methods=['GET'])
+def home():
+    return send_file(os.path.join(BASE_DIR, 'static', 'index.html'))
 
-    # TODO: When we create a graph structure/adjancency list, we can load it here instead of re-parsing the edge list.
-    g = Graph()
-    g.load_from_file(SOURCE_PATH)
+@app.route('/api/search', methods=['POST'])
+def search_helper():
 
+    print(request.json)
+
+    data = request.json
+    start_node = data.get('start')
+    end_node = data.get('goal')
+    mode = data.get('mode')
+    algorithm = data.get('algorithm')
+
+    if not start_node:
+        return jsonify({"Error": "Start node are required."}), 400
+
+    if mode == 'farthest':
+        result = g.find_eccentricity(start_node)
+        print(result)
+        return jsonify(result)
     
-    # nodes: set[str] = set()
+    elif mode == 'shortest':
+        if not end_node:
+            return jsonify({"Error": "End node is required for shortest path search."}), 400
+        
+        if algorithm == 'astar':
+            result = g.astar_with_landmarks(start_node, end_node)
+        elif algorithm == 'dijkstra':
+            result = g.dijkstra_shortest_path(start_node, end_node)
+        
+        print("Result:")
+        print(result)
+        print(jsonify(result))
 
-    # # Stream the edge list and persist all unique node ids.
-    # with gzip.open(SOURCE_PATH, "rt") as fh:
-    #     for index, line in enumerate(fh, start=1):
-    #         parts = line.strip().split()
-    #         if len(parts) != 2:
-    #             continue  # Skip malformed lines.
-
-    #         # TODO: Once we have the adjacency list/graph structure we can do the updates here 
-    #         nodes.update(parts)
-
-    #         # Print a progress update every million edges processed.
-    #         if index % 1_000_000 == 0:
-    #             print(
-    #                 f"Processed {index:,} edges; found {len(nodes):,} unique nodes",
-    #                 end="\r",
-    #             )
+        return jsonify(result)
+    
 
 
-    # print(
-    #     f"\nNodes processed: {len(nodes):,} \n"
-    #     f"(source: {SOURCE_PATH})."
-    # )
-
-
-
+        
 
 
 if __name__ == "__main__":
-    # current_dir = os.path.dirname(os.path.abspath(__file__))
-    # print(current_dir)
-    # src_path = os.path.join(current_dir, 'src')
-    # print(src_path)
-    # # extract_nodes()
-
-
-    # determine relative paths for source and output files
-    BASE_DIR = Path(__file__).resolve().parent
-    SOURCE_PATH = BASE_DIR / "data" / "gplus_combined.txt"
-
-    # ensure the source dataset exists
-    if not SOURCE_PATH.exists():
-        raise FileNotFoundError(f"Missing dataset: {SOURCE_PATH}")
-
-
-    g = Graph()
-    g.load_from_file(SOURCE_PATH)
+    
+    print("Starting Flask server...")
+    app.run(host='0.0.0.0', port=8899, debug=True)
